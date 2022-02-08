@@ -16,14 +16,17 @@ package v1alpha1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tektoncd/pipeline/pkg/substitution"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"knative.dev/pkg/ptr"
-
+	v1 "github.com/knative/pkg/apis/duck/v1"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/substitution"
 	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"knative.dev/eventing-github/pkg/apis/sources/v1alpha1"
+	"knative.dev/pkg/ptr"
+	"net/url"
+	"strings"
 )
 
 // +genclient
@@ -298,8 +301,44 @@ func (w *Workflow) ToTriggers() ([]triggersv1beta1.Trigger, error) {
 	return triggers, nil
 }
 
-func (r Event) CreateWebhook() {
-	// Either make a call - make a call seems easier
-	// Or use KnativeEventing
-	//gh.
+// Based on EventSource+Type, configure the right interceptors + bindings
+
+func (r Event) ToEventSource() (*v1alpha1.GitHubSource, error) {
+	u, err := url.Parse(r.Source.URL)
+	if err != nil {
+		return nil, err
+	}
+	spl := strings.Split(u.Path, "/")
+	if len(spl) != 3 {
+		return nil, fmt.Errorf("invalid path: %s", spl)
+	}
+	owner, repo := spl[1], spl[2]
+
+	ghs := &v1alpha1.GitHubSource{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "GitHubSource",
+			APIVersion: "v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-%s", owner, repo)},
+		Spec: v1alpha1.GitHubSourceSpec{
+			ServiceAccountName: "",
+			OwnerAndRepository: fmt.Sprintf("%s/%s", owner, repo),
+			EventTypes:         []string{r.Type},
+			AccessToken:        v1alpha1.SecretValueFromSource{},
+			SecretToken:        v1alpha1.SecretValueFromSource{},
+			GitHubAPIURL:       "",
+			Secure:             nil,
+			SourceSpec: v1.SourceSpec{},
+		},
+	}
+
+	//ghsgithubSource.Clientset.SourcesV1alpha1().GitHubSources("default").Create(context.Background(), &v1alpha1.GitHubSource{
+	//	ObjectMeta: metav1.ObjectMeta{
+	//		Name: fmt.Sprintf("%s-%s", owner, repo),
+	//	},
+	//	Spec:   v1alpha1.GitHubSourceSpec{},
+	//	Status: v1alpha1.GitHubSourceStatus{},
+	//}, metav1.CreateOptions{})
+	//
+	return
 }

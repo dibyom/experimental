@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/GoogleCloudPlatform/cloud-builders/gcs-fetcher v0.0.0-20210729182058-ea1f5c7c37f1
 	github.com/google/go-cmp v0.5.6
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.3.0
 	github.com/tektoncd/pipeline v0.32.1
 	github.com/tektoncd/plumbing v0.0.0-20211012143332-c7cc43d9bc0c
 	github.com/tektoncd/triggers v0.18.0
@@ -14,8 +14,10 @@ require (
 	k8s.io/apimachinery v0.22.5
 	k8s.io/client-go v0.22.5
 	k8s.io/code-generator v0.22.5
-	k8s.io/kube-openapi v0.0.0-20211109043538-20434351676c
-	knative.dev/pkg v0.0.0-20220104185830-52e42b760b54
+	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65
+	knative.dev/eventing v0.29.0 // indirect
+	knative.dev/pkg v0.0.0-20220118160532-77555ea48cd4
+	knative.dev/serving v0.29.0 // indirect
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -23,4 +25,5 @@ require (
 replace (
 	contrib.go.opencensus.io/exporter/stackdriver => contrib.go.opencensus.io/exporter/stackdriver v0.13.4
 	github.com/Azure/azure-sdk-for-go => github.com/Azure/azure-sdk-for-go v38.2.0+incompatible
+	github.com/antlr/antlr4 => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210930093333-01de314d7883
 )
