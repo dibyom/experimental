@@ -14,16 +14,21 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tektoncd/pipeline/pkg/substitution"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"knative.dev/pkg/ptr"
-
+	"github.com/google/go-github/v42/github"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/tektoncd/pipeline/pkg/substitution"
 	triggersv1beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"knative.dev/pkg/ptr"
+	"net/http"
+	"net/url"
+	"strings"
 )
 
 // +genclient
@@ -298,8 +303,30 @@ func (w *Workflow) ToTriggers() ([]triggersv1beta1.Trigger, error) {
 	return triggers, nil
 }
 
-func (r Event) CreateWebhook() {
+// TODO: This should be its own package
+const ()
+
+func (r Event) CreateWebhook(k kubernetes.Interface) error {
 	// Either make a call - make a call seems easier
 	// Or use KnativeEventing
-	//gh.
+	u, err := url.Parse(r.Source.URL)
+	if err != nil {
+		return err
+	}
+	spl := strings.Split(u.Path, "/")
+	if len(spl) != 3 {
+		return fmt.Errorf("invalid path: %s", spl)
+	}
+	owner, repo := spl[1], spl[2]
+
+	secretToken := fetchSecretToken()
+	client := github.NewClient(http.DefaultClient)
+	client.Repositories.CreateHook(context.Background(), owner, repo, &github.Hook{
+		Config: map[string]interface{}{
+			"content_type": "json",
+			"secret":       "",
+		},
+		Events: []string{r.Type},
+		Active: ptr.Bool(true),
+	})
 }
